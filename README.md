@@ -33,4 +33,5 @@ Clean up all the resources defined in the configuration file:
 ## Reference
 
 [Terraform - google docunentation](https://registry.terraform.io/providers/hashicorp/google/latest/docs)
+
 [Set detination permissions - Log sink to Pub/Sub topic](https://cloud.google.com/logging/docs/export/configure_export_v2#dest-auth)
