@@ -14,6 +14,7 @@
 
 # [START functions_cloudevent_pubsub]
 import base64
+import os
 
 import functions_framework
 
@@ -23,4 +24,5 @@ import functions_framework
 def subscribe(cloud_event):
     # Print out the data from Pub/Sub, to prove that it worked
     print("Hello, " + base64.b64decode(cloud_event.data["message"]["data"]).decode() + "!")
+    print(os.environ.get('SERVICE_CONFIG_TEST', 'config_test_default'))
 # [END functions_cloudevent_pubsub]
