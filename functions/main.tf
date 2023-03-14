@@ -7,22 +7,19 @@ terraform {
   }
 }
 
-locals {
-  project = "datawarehouse-transform-tf" # Google Cloud Platform Project ID
-  region  = "us-central1"
-}
 
 provider "google" {
-  project = local.project
-  region  = local.region
+  project = var.project_id
+  region  = var.region
 }
 
 # Create Storage bucket for hosting zipped cloud function source code
 resource "google_storage_bucket" "bucket" {
-  name                        = "${local.project}-gcf-source" # Every bucket name must be globally unique
+  name                        = "${var.project_id}-gcf-source" # Every bucket name must be globally unique
   location                    = "US"
   uniform_bucket_level_access = true
 }
+
 
 # Push zipped function source code to bucket
 resource "google_storage_bucket_object" "object" {
@@ -47,7 +44,7 @@ resource "google_logging_project_sink" "log-sink" {
 
 # Grant the sink's writer identity the Pub/Sub publisher role to a specified topic.
 resource "google_pubsub_topic_iam_member" "log-writer" {
-  project = local.project
+  project = var.project_id
   topic = google_pubsub_topic.topic.name
   role = "roles/pubsub.publisher"
   member = google_logging_project_sink.log-sink.writer_identity
@@ -61,7 +58,7 @@ resource "google_service_account" "account" {
 
 # Permissions on the service account used by the function and Eventarc trigger
 resource "google_project_iam_member" "invoking" {
-  project = local.project
+  project = var.project_id
   role    = "roles/run.invoker"
   member  = "serviceAccount:${google_service_account.account.email}"
   depends_on = [
@@ -70,7 +67,7 @@ resource "google_project_iam_member" "invoking" {
 }
 
 resource "google_project_iam_member" "event-receiving" {
-  project = local.project
+  project = var.project_id
   role    = "roles/eventarc.eventReceiver"
   member  = "serviceAccount:${google_service_account.account.email}"
   depends_on = [google_project_iam_member.invoking]
@@ -85,7 +82,7 @@ resource "google_cloudfunctions2_function" "function" {
     google_project_iam_member.event-receiving
   ]
   name        = "function-tf"
-  location    = local.region
+  location    = var.region
   description = "provision by terraform"
 
   build_config {
@@ -116,7 +113,7 @@ resource "google_cloudfunctions2_function" "function" {
   }
 
   event_trigger {
-    trigger_region        = local.region
+    trigger_region        = var.region
     event_type            = "google.cloud.pubsub.topic.v1.messagePublished"
     pubsub_topic          = google_pubsub_topic.topic.id
     retry_policy          = "RETRY_POLICY_RETRY"
